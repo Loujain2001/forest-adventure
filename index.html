@@ -1,0 +1,1246 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Forest Adventure · The Enchanted Trail</title>
+
+  <style>
+    :root {
+      --forest: #244b3e;
+      --mint: #eaf4ea;
+      --gold: #d9a646;
+      --paper: #fffdf5;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      color: var(--forest);
+      font-family: system-ui, -apple-system,
+        'Segoe UI', sans-serif;
+      background:
+        radial-gradient(
+          ellipse at 15% 0%,
+          #fff7e2 0%, transparent 52%
+        ),
+        linear-gradient(
+          160deg, #f8f5e9,
+          #dcece3 76%, #d1e6dc
+        );
+      min-height: 100vh;
+    }
+
+    .page {
+      width: min(1080px, 100%);
+      margin: auto;
+      padding: 30px 18px 48px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .kicker {
+      color: #9a8358;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .26em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-family: Georgia, serif;
+      font-size: clamp(34px, 5.2vw, 54px);
+      letter-spacing: -.025em;
+      margin: 7px 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #6e8876;
+      font-size: 14px;
+    }
+
+    /* NEW: Pause button above the game */
+
+    .stage-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      min-height: 46px;
+      padding: 0 5px 9px;
+    }
+
+    #pauseButton {
+      background: #fff1d2;
+      color: #386549;
+      border: 1px solid #e7d9b6;
+      padding: 10px 15px;
+      border-radius: 11px;
+    }
+
+    /* Game container */
+
+    .stage-card {
+      padding: 12px;
+      border: 1px solid #e1e9db;
+      background: var(--paper);
+      border-radius: 24px;
+      box-shadow:
+        0 23px 60px #28513e20,
+        0 3px 10px #28513e10;
+    }
+
+    .stage {
+      position: relative;
+      border-radius: 17px;
+      overflow: hidden;
+      isolation: isolate;
+      background: #bce0d7;
+    }
+
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 2/1;
+    }
+
+    /* Introduction and level completion */
+
+    .stage-overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-content: center;
+      text-align: center;
+      padding: 26px;
+      background:
+        linear-gradient(
+          120deg, #122d2eae, #2148378c
+        );
+      color: #fffdf1;
+    }
+
+    .stage-overlay h2 {
+      margin: 0 0 9px;
+      font-family: Georgia, serif;
+      font-size: clamp(29px, 4.5vw, 49px);
+    }
+
+    .stage-overlay p {
+      max-width: 420px;
+      margin: 0 auto 18px;
+      line-height: 1.55;
+      color: #f1f6ed;
+    }
+
+    .stage-overlay .chapter {
+      color: #f9d999;
+      text-transform: uppercase;
+      letter-spacing: .2em;
+      font-weight: 700;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .stage-overlay button {
+      margin: auto;
+    }
+
+    /* Pause overlay */
+
+    .pause-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      text-align: center;
+      background:
+        linear-gradient(
+          130deg, #173b38de, #305e4cd9
+        );
+      color: #fffdf4;
+    }
+
+    .pause-content {
+      max-width: 440px;
+      width: 100%;
+      padding: 20px;
+    }
+
+    .pause-symbol {
+      font-size: 42px;
+      margin-bottom: 8px;
+    }
+
+    .pause-content h2 {
+      font-family: Georgia, serif;
+      font-size: clamp(28px, 4.2vw, 44px);
+      margin: 0 0 10px;
+    }
+
+    .pause-content p {
+      color: #eef7ee;
+      line-height: 1.6;
+      margin: 0 0 20px;
+    }
+
+    #resumeButton {
+      font-size: 15px;
+      padding: 13px 25px;
+      background: #f6d58f;
+      color: #28513b;
+    }
+
+    #resumeButton:disabled {
+      opacity: .55;
+    }
+
+    /* Level completion report */
+
+    .stage-overlay.has-report {
+      background:
+        linear-gradient(
+          120deg, #153b37ed, #315e4de9
+        );
+    }
+
+    .level-report {
+      width: min(575px, 100%);
+      margin: 0 auto 13px;
+    }
+
+    .report-stats {
+      display: grid;
+      grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .report-stat {
+      border: 1px solid #ffffff38;
+      border-radius: 12px;
+      padding: 10px 6px;
+      background: #ffffff20;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .report-stat strong {
+      font-size: 22px;
+      color: #fff5ce;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .report-stat span {
+      font-size: 11px;
+      color: #f3f8ed;
+    }
+
+    .report-movements {
+      display: grid;
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .report-movement {
+      border-radius: 10px;
+      background: #ffffff16;
+      padding: 9px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border: 1px solid #ffffff2b;
+    }
+
+    .report-movement span {
+      font-size: 11px;
+    }
+
+    .report-movement strong {
+      color: #fff5cc;
+      font-size: 16px;
+    }
+
+    .stage-overlay .report-note {
+      font-size: 10px;
+      margin: 8px auto 0;
+      color: #d7e8db;
+    }
+
+    .stage-overlay.has-report h2 {
+      font-size: clamp(28px, 4vw, 40px);
+    }
+
+    .stage-overlay.has-report > p {
+      margin-bottom: 11px;
+      font-size: 13px;
+    }
+
+    .stage-overlay.has-report button {
+      background: #f6d58f;
+      color: #28513b;
+      font-size: 14px;
+      padding: 12px 20px;
+    }
+
+    /* Chapter and game speed */
+
+    .game-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 17px 9px 7px;
+    }
+
+    .chapter-details {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    #levelLabel {
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    #chapterHint {
+      color: #728b79;
+      font-size: 12px;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    select {
+      padding: 10px 12px;
+      background: #eef7ed;
+      color: #305c45;
+      border: 1px solid #d6e5d5;
+      border-radius: 11px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    #speedReadout {
+      color: #759080;
+      font-weight: 500;
+      font-size: 11px;
+    }
+
+    /* Mission progress */
+
+    .mission {
+      margin-top: 17px;
+      border: 1px solid #deeadc;
+      border-radius: 20px;
+      padding: 19px 21px;
+      background: #fffef9cc;
+    }
+
+    .mission-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+    }
+
+    .mission h2 {
+      margin: 0 0 6px;
+      font-family: Georgia, serif;
+      font-size: 23px;
+    }
+
+    #questHint {
+      color: #718777;
+      font-size: 13px;
+      margin: 0;
+    }
+
+    .mission-count {
+      white-space: nowrap;
+      font-weight: 800;
+      font-size: 22px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .track {
+      width: 100%;
+      height: 10px;
+      background: #e4eee1;
+      border-radius: 30px;
+      margin: 17px 0 14px;
+      overflow: hidden;
+    }
+
+    #progressFill {
+      height: 100%;
+      width: 0%;
+      background:
+        linear-gradient(
+          90deg, #62a581, #c8ac5c
+        );
+      border-radius: 30px;
+      transition: width .45s;
+    }
+
+    /* Facial exercise cards */
+
+    .gesture-progress {
+      display: grid;
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .gesture-card {
+      padding: 11px 10px;
+      background: #f6faf3;
+      border: 1px solid #e1eade;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .gesture-card .gesture-name {
+      font-weight: 800;
+    }
+
+    .gesture-card .dots {
+      color: #9ab1a3;
+      letter-spacing: 4px;
+      font-size: 18px;
+    }
+
+    .gesture-card.active {
+      border-color: #d6b86f;
+      background: #fff7df;
+    }
+
+    .gesture-card.complete .dots {
+      color: #41936e;
+    }
+
+    /* Camera and controls */
+
+    .control-panel {
+      display: grid;
+      grid-template-columns:
+        176px minmax(0, 1fr);
+      gap: 20px;
+      margin-top: 17px;
+      padding: 18px;
+      border: 1px solid #dfeadd;
+      border-radius: 20px;
+      background: #fffefaed;
+      box-shadow: 0 10px 30px #28513e0b;
+    }
+
+    .camera-card {
+      width: 176px;
+      background: #eaf2e9;
+      padding: 7px;
+      border-radius: 15px;
+      align-self: start;
+    }
+
+    .camera-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 2px 9px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    #webcam {
+      display: block;
+      width: 162px;
+      height: 122px;
+      background: #cfdfd4;
+      border-radius: 10px;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .controls h2 {
+      font-family: Georgia, serif;
+      font-size: 23px;
+      margin: 0 0 7px;
+    }
+
+    .controls p {
+      color: #718878;
+      font-size: 13px;
+      margin: 0 0 14px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font: inherit;
+      font-size: 13px;
+      padding: 12px 18px;
+      color: white;
+      background: #357957;
+      border: 0;
+      border-radius: 11px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: filter .15s, transform .15s;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: .47;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: #e2f0e4;
+      color: #2a694b;
+    }
+
+    .status {
+      font-size: 12px;
+      margin-top: 10px;
+      color: #819584;
+    }
+
+    #movementResult {
+      background: #eff7ee;
+      border: 1px solid #e4eee4;
+      border-radius: 11px;
+      min-height: 41px;
+      margin-top: 10px;
+      padding: 12px 13px;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    details {
+      margin-top: 12px;
+      padding: 10px 13px;
+      background: #f5faf4;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #718777;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    /* Easy Face Setup */
+
+    .calibration-wizard {
+      margin: 14px 0;
+      padding: 17px;
+      border-radius: 15px;
+      background: #f4faf2;
+      border: 1px solid #cde4d2;
+      text-align: center;
+    }
+
+    .calibration-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .calibration-step {
+      font-weight: 800;
+      font-size: 12px;
+      color: #5e8873;
+    }
+
+    .calibration-icon {
+      font-size: 38px;
+      padding-top: 11px;
+    }
+
+    #calibrationTitle {
+      margin: 8px 0 5px;
+      font: 700 26px Georgia, serif;
+      color: #285f47;
+    }
+
+    #calibrationInstruction {
+      font-size: 15px;
+      color: #577e68;
+      line-height: 1.5;
+      max-width: 430px;
+      margin: 0 auto 16px;
+    }
+
+    .calibration-progress {
+      width: 100%;
+      height: 8px;
+      background: #dceade;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    #calibrationProgressFill {
+      display: block;
+      width: 0%;
+      height: 100%;
+      background: #58a37d;
+      transition: width .2s;
+    }
+
+    .calibration-meter {
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 9px;
+      margin: 11px 0 8px;
+    }
+
+    #calibrationTimer {
+      font-size: 46px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: #367b57;
+    }
+
+    #calibrationPhase {
+      font-size: 14px;
+      font-weight: 800;
+      color: #668b76;
+    }
+
+    .calibration-actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .calibration-note {
+      margin: 10px 0 0 !important;
+      color: #6b8774 !important;
+      font-size: 12px !important;
+    }
+
+    .calibration-summary {
+      margin-top: 11px;
+      padding: 11px 13px;
+      border-radius: 11px;
+      background: #eff7ef;
+      color: #326d4d;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .tip {
+      text-align: center;
+      color: #879787;
+      font-size: 12px;
+      margin: 18px 0 0;
+    }
+
+    /* Responsive design */
+
+    @media (max-width: 680px) {
+      .page {
+        padding: 18px 10px 32px;
+      }
+
+      .mission {
+        padding: 14px;
+      }
+
+      .gesture-progress {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+
+      .control-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .camera-card {
+        width: 176px;
+      }
+
+      .stage-overlay {
+        padding: 12px;
+      }
+
+      .stage-overlay p {
+        font-size: 12px;
+      }
+
+      .stage-overlay.has-report {
+        position: static;
+        padding: 22px 12px;
+      }
+
+      .report-movements {
+        grid-template-columns:
+          repeat(2, minmax(0, 1fr));
+      }
+
+      .report-stat strong {
+        font-size: 17px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<main class="page">
+
+  <!-- HEADER -->
+
+  <header class="header">
+    <div class="kicker">
+      A little magic in every movement
+    </div>
+
+    <h1>Forest Adventure</h1>
+
+    <p class="subtitle">
+      The Enchanted Trail ·
+      A camera-based facial exercise game
+    </p>
+  </header>
+
+  <!-- GAME CONTAINER -->
+
+  <section class="stage-card">
+
+    <!-- PAUSE BUTTON: TOP RIGHT -->
+
+    <div class="stage-toolbar">
+      <button id="pauseButton" hidden disabled>
+        ⏸ Pause Game
+      </button>
+    </div>
+
+    <!-- GAME CANVAS -->
+
+    <div class="stage">
+
+      <canvas
+        id="gameCanvas"
+        width="960"
+        height="480"
+        aria-label="Animated fantasy forest game">
+      </canvas>
+
+      <!-- INTRODUCTION / LEVEL COMPLETE -->
+
+      <div
+        class="stage-overlay"
+        id="screenOverlay">
+
+        <div
+          class="chapter"
+          id="overlayChapter">
+          The enchanted trail
+        </div>
+
+        <h2 id="overlayTitle">
+          A forest needs your magic
+        </h2>
+
+        <p id="overlayDescription">
+          Start the camera, then follow five
+          simple face movements to begin your adventure.
+        </p>
+
+        <!-- LEVEL REPORT -->
+
+        <div
+          id="levelReport"
+          class="level-report"
+          hidden>
+
+          <div class="report-stats">
+
+            <div class="report-stat">
+              <strong id="reportTotal">
+                12 / 12
+              </strong>
+              <span>Movements</span>
+            </div>
+
+            <div class="report-stat">
+              <strong id="reportTime">
+                0:00
+              </strong>
+              <span>Active play time</span>
+            </div>
+
+            <div class="report-stat">
+              <strong id="reportPoints">
+                0
+              </strong>
+              <span>Level points</span>
+            </div>
+
+          </div>
+
+          <div class="report-movements">
+
+            <div class="report-movement">
+              <span>😊 Smile</span>
+              <strong id="reportSmile">0 / 3</strong>
+            </div>
+
+            <div class="report-movement">
+              <span>↟ Eyebrows</span>
+              <strong id="reportEyebrow">0 / 3</strong>
+            </div>
+
+            <div class="report-movement">
+              <span>🛡 Eyes</span>
+              <strong id="reportEyes">0 / 3</strong>
+            </div>
+
+            <div class="report-movement">
+              <span>🍃 Lips</span>
+              <strong id="reportLips">0 / 3</strong>
+            </div>
+
+          </div>
+
+          <p class="report-note">
+            Recognized game actions,
+            not a medical assessment.
+          </p>
+
+        </div>
+
+        <button
+          id="nextLevelButton"
+          hidden>
+          Continue to Level 2
+        </button>
+
+      </div>
+
+      <!-- PAUSE SCREEN -->
+
+      <div
+        id="pauseOverlay"
+        class="pause-overlay"
+        hidden
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pauseTitle">
+
+        <div class="pause-content">
+
+          <div
+            class="pause-symbol"
+            aria-hidden="true">
+            ⏸
+          </div>
+
+          <h2 id="pauseTitle">
+            Adventure Paused
+          </h2>
+
+          <p id="pauseDescription">
+            Take your time.
+            Your forest adventure is waiting.
+          </p>
+
+          <button
+            id="resumeButton"
+            disabled>
+            Continue Adventure →
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- LEVEL AND SPEED -->
+
+    <div class="game-bottom">
+
+      <div class="chapter-details">
+
+        <span id="levelLabel">
+          Level 1 · Sunlit Grove
+        </span>
+
+        <span id="chapterHint">
+          Restore the forest's lost lights
+        </span>
+
+      </div>
+
+      <label
+        class="speed-control"
+        for="paceSelect">
+
+        Game speed
+
+        <select id="paceSelect">
+          <option value="relaxed">
+            Relaxed
+          </option>
+
+          <option value="normal" selected>
+            Normal
+          </option>
+
+          <option value="challenge">
+            Challenge
+          </option>
+        </select>
+
+        <span id="speedReadout">
+          180 px/s
+        </span>
+
+      </label>
+
+    </div>
+
+  </section>
+
+  <!-- MISSION PROGRESS -->
+
+  <section class="mission">
+
+    <div class="mission-head">
+
+      <div>
+
+        <h2 id="questTitle">
+          The forest is waking up...
+        </h2>
+
+        <p id="questHint">
+          Each gesture is a little piece
+          of forest magic.
+        </p>
+
+      </div>
+
+      <span
+        class="mission-count"
+        id="taskCount">
+        0 / 12
+      </span>
+
+    </div>
+
+    <div class="track">
+      <div id="progressFill"></div>
+    </div>
+
+    <!-- FACIAL MOVEMENT PROGRESS -->
+
+    <div class="gesture-progress">
+
+      <div
+        class="gesture-card"
+        data-gesture="smile">
+
+        <span class="gesture-name">
+          ✨ Smile
+        </span>
+
+        <span class="dots">
+          ○ ○ ○
+        </span>
+
+      </div>
+
+      <div
+        class="gesture-card"
+        data-gesture="eyebrow">
+
+        <span class="gesture-name">
+          🦊 Eyebrows
+        </span>
+
+        <span class="dots">
+          ○ ○ ○
+        </span>
+
+      </div>
+
+      <div
+        class="gesture-card"
+        data-gesture="eyes">
+
+        <span class="gesture-name">
+          🛡 Eyes
+        </span>
+
+        <span class="dots">
+          ○ ○ ○
+        </span>
+
+      </div>
+
+      <div
+        class="gesture-card"
+        data-gesture="lips">
+
+        <span class="gesture-name">
+          🍃 Lips
+        </span>
+
+        <span class="dots">
+          ○ ○ ○
+        </span>
+
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- CAMERA AND CONTROLS -->
+
+  <section class="control-panel">
+
+    <div class="camera-card">
+
+      <div class="camera-title">
+        📷 Live camera
+      </div>
+
+      <video
+        id="webcam"
+        autoplay
+        muted
+        playsinline>
+      </video>
+
+    </div>
+
+    <div class="controls">
+
+      <h2>Your magic powers</h2>
+
+      <p>
+        Watch the approaching object.
+        Perform the matching facial movement
+        when the game asks.
+      </p>
+
+      <div class="buttons">
+
+        <button id="startButton">
+          Start Camera
+        </button>
+
+        <button
+          id="calibrateButton"
+          class="secondary"
+          disabled>
+          Set Up My Face
+        </button>
+
+      </div>
+
+      <!-- EASY FACE SETUP -->
+
+      <div
+        id="calibrationWizard"
+        class="calibration-wizard"
+        hidden>
+
+        <div class="calibration-head">
+
+          <span
+            class="calibration-step"
+            id="calibrationStep">
+            Step 1 of 5
+          </span>
+
+          <span class="calibration-step">
+            Face setup
+          </span>
+
+        </div>
+
+        <div
+          id="calibrationIcon"
+          class="calibration-icon"
+          aria-hidden="true">
+          😌
+        </div>
+
+        <h3 id="calibrationTitle">
+          Relax your face
+        </h3>
+
+        <p id="calibrationInstruction">
+          Look straight at the camera.
+          Keep your face relaxed when GO appears.
+        </p>
+
+        <div class="calibration-progress">
+          <span id="calibrationProgressFill"></span>
+        </div>
+
+        <div class="calibration-meter">
+
+          <span id="calibrationTimer">
+            3
+          </span>
+
+          <span id="calibrationPhase">
+            Get ready. Wait for GO.
+          </span>
+
+        </div>
+
+        <p
+          id="calibrationNote"
+          class="calibration-note">
+          One movement at a time.
+          The game starts automatically when you finish.
+        </p>
+
+        <div class="calibration-actions">
+
+          <button
+            id="calibrationRetry"
+            class="secondary"
+            hidden>
+            Try Again
+          </button>
+
+          <button
+            id="calibrationGentle"
+            class="secondary"
+            hidden>
+            Continue Anyway
+          </button>
+
+          <button
+            id="calibrationCancel"
+            class="secondary">
+            Close Setup
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- CALIBRATION SUCCESS MESSAGE -->
+
+      <div
+        id="calibrationSummary"
+        class="calibration-summary"
+        hidden>
+        ✓ Face setup complete! Your game is ready.
+      </div>
+
+      <!-- CAMERA STATUS -->
+
+      <div
+        id="status"
+        class="status">
+        Camera not started
+      </div>
+
+      <!-- MOVEMENT FEEDBACK -->
+
+      <div
+        id="movementResult"
+        role="status"
+        aria-live="polite">
+        Waiting for camera...
+      </div>
+
+      <!-- TECHNICAL VALUES -->
+
+      <details>
+
+        <summary>
+          Show facial detection values
+        </summary>
+
+        <p id="eyebrowScore">
+          Eyebrows: --
+        </p>
+
+        <p id="eyeScore">
+          Eyes: --
+        </p>
+
+        <p id="smileScore">
+          Smile: --
+        </p>
+
+        <p id="puckerScore">
+          Lips: --
+        </p>
+
+      </details>
+
+    </div>
+
+  </section>
+
+  <!-- KEYBOARD TEST -->
+
+  <p class="tip">
+    Keyboard test:
+    S = smile ·
+    Space = eyebrows ·
+    E = eye shield ·
+    W = wind.
+    No penalty for taking your time.
+  </p>
+
+</main>
+
+<!-- JAVASCRIPT -->
+<script type="module" src="/src/main.js"></script>
+
+</body>
+</html>
